@@ -2,7 +2,7 @@
 FOR %%I IN ("%~dp0.") DO SET "PROJECT_ROOT_DIR=%%~dpI"
 
 set ASSISTANT_DIR=%PROJECT_ROOT_DIR%Assistant\
-set ASSISTANT_EXE=%ASSISTANT_DIR%Bin\Release\Scaffold-Assistant.exe
+set ASSISTANT_EXE=%PROJECT_ROOT_DIR%Output\Scaffold-Assistant\Release\Scaffold-Assistant.exe
 
 cmake --version >nul 2>&1
 if ERRORLEVEL 1 (
