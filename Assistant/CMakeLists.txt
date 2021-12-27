@@ -33,6 +33,9 @@ set(VAR_SOURCES
     Src/TestClass.h
 )
 
+# VS 필터 제거
+source_group("" FILES ${VAR_SOURCES})
+
 add_executable(${VAR_PROJECT_NAME} ${VAR_SOURCES})
 set_target_properties(${VAR_PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY    "${SCAF_OUTPUT_DIR}/${VAR_PROJECT_NAME}/$<CONFIG>"
