@@ -28,9 +28,17 @@ include("${SCAF_ROOT_DIR}/CMakeUtilities/CMakeLists.txt")
 include("${SCAF_ROOT_DIR}/CMakeExternals/CMakeLists.txt")
 
 set(VAR_SOURCES
+    Src/FileReader.cpp
+    Src/FileReader.h
+    Src/FileWriter.cpp
+    Src/FileWriter.h
+    Src/ProgramSingleton.cpp
+    Src/ProgramSingleton.h
+    Src/Setup.cpp
+    Src/Setup.h
+    Src/TextTemplate.cpp
+    Src/TextTemplate.h
     Src/main.cpp
-    Src/TestClass.cpp
-    Src/TestClass.h
 )
 
 # VS 필터 제거
