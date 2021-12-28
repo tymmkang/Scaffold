@@ -49,7 +49,7 @@ function(SCAF_UTILITY_FUNC_GET_FILES_IN_DIRECTORY_RECURSIVE
 
     foreach(SUBDIRECTORY ${SUBDIRECTORIES})
         # Recursive
-        SCAF_UTILITY_FUNC_GET_FILES_IN_DIRECTORY(
+        SCAF_UTILITY_FUNC_GET_FILES_IN_DIRECTORY_RECURSIVE(
             ${IN_TARGET_DIRECTORY}/${SUBDIRECTORY}
             "${IN_FILE_EXTENSIONS}"
             FILE_PATH_LIST_IN_DIRECTORY)
@@ -58,4 +58,15 @@ function(SCAF_UTILITY_FUNC_GET_FILES_IN_DIRECTORY_RECURSIVE
     endforeach()
 
     set(${OUT_RESULT_RELATIVE_FILE_PATH_LIST} ${FILE_PATH_LIST} PARENT_SCOPE)
+endfunction()
+
+# 파일들의 상대경로 리스트를 source_group의 인자에 알맞게 가공하고 호출합니다.
+# IN_FILE_PATH_LIST_TO_GROUP[in]      그룹화 할 파일 경로 리스트
+function(SCAF_UTILITY_FUNC_SOURCE_GROUP
+    IN_FILE_PATH_LIST_TO_GROUP)
+
+    foreach(FILE_PATH ${IN_FILE_PATH_LIST_TO_GROUP})
+        get_filename_component(PARENT_DIRECTORY ${FILE_PATH} DIRECTORY)
+        source_group(${PARENT_DIRECTORY} FILES ${FILE_PATH})
+    endforeach()
 endfunction()
