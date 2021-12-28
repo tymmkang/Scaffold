@@ -26,6 +26,10 @@ function(SCAF_UTILITY_FUNC_GET_FILES_IN_DIRECTORY
     set(${OUT_RESULT_RELATIVE_FILE_PATH_LIST} ${FILE_PATH_LIST} PARENT_SCOPE)
 endfunction()
 
+# 특정 경로를 재귀적으로 순회하면서 특정 확장자(들)을 가진 파일들의 상대 경로를 반환하는 함수
+# IN_TARGET_DIRECTORY[in]                   파일들의 상대경로를 취득 할 부모 디렉토리
+# IN_FILE_EXTENSIONS[in]                    취득 할 파일들의 확장자 ex) *.cmake *.cpp *.h
+# OUT_RESULT_RELATIVE_FILE_PATH_LIST[out]   파일 경로 반환 파라미터
 function(SCAF_UTILITY_FUNC_GET_FILES_IN_DIRECTORY_RECURSIVE
     IN_TARGET_DIRECTORY
     IN_FILE_EXTENSIONS
