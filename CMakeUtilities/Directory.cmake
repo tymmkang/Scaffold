@@ -1,0 +1,20 @@
+# Directory
+
+# 특정 경로에 포함된 디렉토리를 반환하는 매크로
+# IN_TARGET_DIRECTORY[in]               하위 디렉토리 리스트를 취득 할 부모 디렉토리
+# OUT_RESULT_SUBDIRECTORIES[out]        하위 디렉토리 반환 파라미터
+macro(SCAF_UTILITY_GET_SUBDIRECTORIES 
+    IN_TARGET_DIRECTORY 
+    OUT_RESULT_SUBDIRECTORIES)
+
+  file(GLOB SUBDIRECTORIES RELATIVE ${IN_TARGET_DIRECTORY} ${IN_TARGET_DIRECTORY}/*)
+
+  set(SUBDIRECTORY_LIST)
+  foreach(SUBDIRECTORY ${SUBDIRECTORIES})
+    if(IS_DIRECTORY ${IN_TARGET_DIRECTORY}/${SUBDIRECTORY})
+        set(SUBDIRECTORY_LIST ${SUBDIRECTORY_LIST} ${SUBDIRECTORY}) # Append list
+    endif() 
+  endforeach()
+
+  set(${OUT_RESULT_SUBDIRECTORIES} ${SUBDIRECTORY_LIST})
+endmacro()
