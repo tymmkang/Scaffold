@@ -1,0 +1,41 @@
+# Scaffold를 사용하는 프로젝트 측에서 include 하는 공통 CMake 프로젝트 셋업 스크립트
+# include 하기 전, 아래의 값들이 설정되어야 합니다.
+# - SCAF_VAR_PROJECT_NAME : CMake 프로젝트의 이름
+# - SCAF_VAR_SCAFFOLD_RELATIVE_DIR : Scaffold 디렉토리의 상대경로
+
+cmake_minimum_required(VERSION 3.8)
+project(${SCAF_VAR_PROJECT_NAME})
+
+# Scaffold global varaibles (readonly)
+set(SCAF_VAR_PROJECT_ROOT_DIR ${PROJECT_SOURCE_DIR})
+set(SCAF_VAR_SCAFFOLD_DIR ${SCAF_VAR_PROJECT_ROOT_DIR}/${SCAF_VAR_SCAFFOLD_RELATIVE_DIR})
+set(SCAF_VAR_MODULES_RELATIVE_DIR "Modules")
+set(SCAF_VAR_MODULES_DIR ${SCAF_VAR_PROJECT_ROOT_DIR}/${SCAF_VAR_MODULES_RELATIVE_DIR})
+set(SCAF_VAR_OUTPUT_RELATIVE_DIR "Output")
+set(SCAF_VAR_OUTPUT_DIR ${SCAF_VAR_PROJECT_ROOT_DIR}/${SCAF_VAR_OUTPUT_RELATIVE_DIR})
+
+# Debug
+set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
+set(CMAKE_EXE_LINKER_FLAGS_DEBUG ${CMAKE_EXE_LINKER_FLAGS_DEBUG})
+set(CMAKE_SHARED_LINKER_FLAGS_DEBUG ${CMAKE_SHARED_LINKER_FLAGS_DEBUG})
+add_compile_definitions("$<$<CONFIG:Debug>:DEBUG=1>")
+
+# Release
+set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE ${CMAKE_EXE_LINKER_FLAGS_RELEASE})
+set(CMAKE_SHARED_LINKER_FLAGS_RELEASE ${CMAKE_SHARED_LINKER_FLAGS_RELEASE})
+add_compile_definitions("$<$<CONFIG:Release>:RELEASE=2>")
+
+# CMake In-Built modules
+include(ExternalProject)
+include(FetchContent)
+
+# Hide FetchContent related options from CMake gui
+# unset(FETCHCONTENT_BASE_DIR CACHE)
+# unset(FETCHCONTENT_FULLY_DISCONNECTED CACHE)
+# unset(FETCHCONTENT_QUIET CACHE)
+# unset(FETCHCONTENT_UPDATES_DISCONNECTED CACHE)
+
+# Include Scaffold utilities, externals
+include(${SCAF_VAR_SCAFFOLD_DIR}/CMakeUtilities/CMakeLists.txt)
+include(${SCAF_VAR_SCAFFOLD_DIR}/CMakeExternals/CMakeLists.txt)
