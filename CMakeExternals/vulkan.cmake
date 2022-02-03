@@ -5,7 +5,7 @@ function(SCAF_EM_FUNC_ADD_VULKAN
     TARGET_MODULE)
 
     if (NOT CMAKE_VERSION VERSION_LESS 3.7.0)
-        find_package(Vulkan)
+        find_package(Vulkan QUIET)
 
         if(${Vulkan_FOUND})
             target_link_libraries(${TARGET_MODULE} PUBLIC ${Vulkan_LIBRARIES})
