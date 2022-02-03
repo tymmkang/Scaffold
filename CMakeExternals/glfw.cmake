@@ -2,13 +2,16 @@
 # Official website : https://www.glfw.org/
 # Git repository : https://github.com/glfw/glfw
 
+# tymmkang@gmail.com 2022-02-04
+# NOTE : 정적 라이브러리만 지원하고 있습니다.
+
 function(SCAF_EM_FUNC_ADD_GLFW 
     TARGET_MODULE)
 
     set(VAR_EXTERNAL_NAME           "glfw")
     set(VAR_EXTERNAL_GIT_REPO_URL   "https://github.com/glfw/glfw.git")
     set(VAR_EXTERNAL_GIT_TAG        "3.3.6")
-    # set(VAR_EXTERNAL_SHARED         FALSE)
+    set(VAR_EXTERNAL_SHARED         OFF)
 
     ExternalProject_Add(${VAR_EXTERNAL_NAME} 
         GIT_REPOSITORY ${VAR_EXTERNAL_GIT_REPO_URL}
@@ -23,6 +26,7 @@ function(SCAF_EM_FUNC_ADD_GLFW
             "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>"
             "-DCMAKE_BUILD_TYPE=$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>"
             "-DCMAKE_CONFIGURATION_TYPES=$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>"
+            "-DBUILD_SHARED_LIBS=${VAR_EXTERNAL_SHARED}"
             "-DGLFW_BUILD_EXAMPLES=OFF"
             "-DGLFW_BUILD_TESTS=OFF"
             "-DGLFW_BUILD_DOCS=OFF"
@@ -38,12 +42,12 @@ function(SCAF_EM_FUNC_ADD_GLFW
         LOG_DOWNLOAD 1 LOG_UPDATE 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1
     )
 
-    message(STATUS "Add '${VAR_EXTERNAL_NAME}' external dependency to '${TARGET_MODULE}'")    
+    message(STATUS "Add '${VAR_EXTERNAL_NAME}' external dependency to '${TARGET_MODULE}'") 
 
     ExternalProject_Get_property(${VAR_EXTERNAL_NAME} INSTALL_DIR)
     add_dependencies(${TARGET_MODULE} ${VAR_EXTERNAL_NAME})
     target_include_directories(${TARGET_MODULE} PRIVATE "${INSTALL_DIR}/include")
-    target_link_libraries(${TARGET_MODULE} PRIVATE "${INSTALL_DIR}/lib/glfw3.lib")
+    target_link_libraries(${TARGET_MODULE} PRIVATE "${INSTALL_DIR}/lib/glfw3${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
     # if (${VAR_EXTERNAL_SHARED})
     #     # TODO : Copy shared library to project output
