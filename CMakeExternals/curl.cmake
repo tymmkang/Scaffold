@@ -17,8 +17,8 @@ function(SCAF_EM_FUNC_ADD_CURL
         GIT_REPOSITORY ${VAR_EXTERNAL_GIT_REPO_URL}
         GIT_TAG ${VAR_EXTERNAL_GIT_TAG}
 
-        PREFIX ${SCAF_VAR_EXTERNAL_MODULE_PREFIX_DIR}/${VAR_EXTERNAL_NAME}
-        INSTALL_DIR ${FETCHCONTENT_BASE_DIR}/${VAR_EXTERNAL_NAME}
+        PREFIX ${FETCHCONTENT_BASE_DIR}/${VAR_EXTERNAL_NAME}
+        INSTALL_DIR ${SCAF_VAR_EXTERNAL_MODULE_PREFIX_DIR}/${VAR_EXTERNAL_NAME}
 
         BUILD_COMMAND ""
 
@@ -48,9 +48,9 @@ function(SCAF_EM_FUNC_ADD_CURL
 
     if (${VAR_EXTERNAL_SHARED})
         # TODO : Copy shared library to project output
-    else()
+    else ()
         target_compile_definitions(${TARGET_MODULE} PRIVATE "CURL_STATICLIB")
-    endif()
+    endif ()
 
     set_target_properties(${VAR_EXTERNAL_NAME} PROPERTIES FOLDER ${SCAF_VAR_EXTERNAL_MODULE_RELATIVE_DIR})
 endfunction()
