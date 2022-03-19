@@ -1,0 +1,37 @@
+# String
+
+# 문자열(들)의 전방에 임의의 문자열을 삽입합니다. 
+# IN_ORIGINAL_STRING[in]    임의의 문자열이 삽입 될 문자열(들)
+# IN_STRING_TO_INSERT[in]   삽입 할 임의의 문자열
+# OUT_MODIFIED_STRING[out]  삽입 후 문자열(들)
+function(SCAF_UTILITY_FUNC__INSERT_STRING_FORWARD
+    IN_ORIGINAL_STRING
+    IN_STRING_TO_INSERT
+    OUT_MODIFIED_STRING)
+
+    set(VAR_MODIFIED_STRING_LIST)
+    foreach(VAR_ORIGINAL_STRING ${IN_ORIGINAL_STRING}) # 복수의 스트링 입력도 대응 가능
+        set(VAR_MODIFIED_STRING_LIST ${VAR_MODIFIED_STRING_LIST} ${IN_STRING_TO_INSERT}${VAR_ORIGINAL_STRING})
+    endforeach()
+
+    set(${OUT_MODIFIED_STRING} ${VAR_MODIFIED_STRING_LIST} PARENT_SCOPE)
+
+endfunction()
+
+# 문자열(들)의 후방에 임의의 문자열을 연장합니다.
+# IN_ORIGINAL_STRING[in]    임의의 문자열이 연장 될 문자열(들)
+# IN_STRING_TO_APPEND[in]   연장 할 임의의 문자열
+# OUT_MODIFIED_STRING[out]  연장 후 문자열(들)
+function(SCAF_UTILITY_FUNC__APPEND_STRING_BACKWARD
+    IN_ORIGINAL_STRING
+    IN_STRING_TO_APPEND
+    OUT_MODIFIED_STRING)
+
+    set(VAR_MODIFIED_STRING_LIST)
+    foreach(VAR_ORIGINAL_STRING ${IN_ORIGINAL_STRING}) # 복수의 스트링 입력도 대응 가능
+        set(VAR_MODIFIED_STRING_LIST ${VAR_MODIFIED_STRING_LIST} ${VAR_ORIGINAL_STRING}${IN_STRING_TO_APPEND})
+    endforeach()
+
+    set(${OUT_MODIFIED_STRING} ${VAR_MODIFIED_STRING_LIST} PARENT_SCOPE)
+
+endfunction()
