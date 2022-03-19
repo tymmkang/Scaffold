@@ -3,7 +3,7 @@
 # - SCAF_VAR_PROJECT_NAME : CMake 프로젝트의 이름
 # - SCAF_VAR_SCAFFOLD_RELATIVE_DIR : Scaffold 디렉토리의 상대경로
 
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.20)
 project(${SCAF_VAR_PROJECT_NAME})
 
 # Scaffold global varaibles (readonly)

@@ -3,7 +3,7 @@
 # 특정 경로에 포함된 디렉토리를 반환하는 함수
 # IN_TARGET_DIRECTORY[in]               하위 디렉토리 리스트를 취득 할 부모 디렉토리
 # OUT_RESULT_SUBDIRECTORIES[out]        하위 디렉토리 반환 파라미터
-function(SCAF_UTILITY_FUNC_GET_SUBDIRECTORIES 
+function(SCAF_UTILITY_FUNC__GET_SUBDIRECTORIES 
     IN_TARGET_DIRECTORY 
     OUT_RESULT_SUBDIRECTORIES)
 
