@@ -71,3 +71,37 @@ function(SCAF_UTILITY_FUNC__SOURCE_GROUP
         source_group(${PARENT_DIRECTORY} FILES ${FILE_PATH})
     endforeach()
 endfunction()
+
+# 파일 경로(들)에서 경로부분을 제거하고 남은 파일명(들)을 반환합니다.
+# IN_FILE_PATH[in]  경로부분을 제거할 문자열(들)
+# OUT_FILE_NAME[in]  경로부분이 제거된 문자열(들)
+function(SCAF_UTILITY_FUNC__GET_FILENAME
+    IN_FILE_PATH
+    OUT_FILE_NAME)
+
+    set(VAR_PATH_REMOVED_FILE_NAME_LIST)
+    foreach(VAR_FILE_PATH ${IN_FILE_PATH}) # 복수의 경로 입력에도 대응 가능
+        get_filename_component(VAR_FILE_NAME ${VAR_FILE_PATH} NAME)
+        set(VAR_PATH_REMOVED_FILE_NAME_LIST ${VAR_PATH_REMOVED_FILE_NAME_LIST} ${VAR_FILE_NAME})
+    endforeach()
+
+    set(${OUT_FILE_NAME} ${VAR_PATH_REMOVED_FILE_NAME_LIST} PARENT_SCOPE)
+
+endfunction()
+
+# 파일 경로(들)에서 경로부분과 확장자를 제거하고 남은 파일명(들)을 반환합니다.
+# IN_FILE_PATH[in]  경로부분과 확장자를 제거할 문자열(들)
+# OUT_FILE_NAME[in]  경로부분과 확장자가 제거된 문자열(들)
+function(SCAF_UTILITY_FUNC__GET_FILENAME_WITHOUT_EXTENSION
+    IN_FILE_PATH
+    OUT_FILE_NAME)
+
+    set(VAR_PATH_REMOVED_FILE_NAME_LIST)
+    foreach(VAR_FILE_PATH ${IN_FILE_PATH}) # 복수의 경로 입력에도 대응 가능
+        get_filename_component(VAR_FILE_NAME ${VAR_FILE_PATH} NAME_WE)
+        set(VAR_PATH_REMOVED_FILE_NAME_LIST ${VAR_PATH_REMOVED_FILE_NAME_LIST} ${VAR_FILE_NAME})
+    endforeach()
+
+    set(${OUT_FILE_NAME} ${VAR_PATH_REMOVED_FILE_NAME_LIST} PARENT_SCOPE)
+
+endfunction()
