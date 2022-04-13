@@ -37,10 +37,10 @@ include(ExternalProject)
 include(FetchContent)
 
 # Hide FetchContent related options from CMake gui
-# unset(FETCHCONTENT_BASE_DIR CACHE)
-# unset(FETCHCONTENT_FULLY_DISCONNECTED CACHE)
-# unset(FETCHCONTENT_QUIET CACHE)
-# unset(FETCHCONTENT_UPDATES_DISCONNECTED CACHE)
+unset(FETCHCONTENT_BASE_DIR CACHE)
+unset(FETCHCONTENT_FULLY_DISCONNECTED CACHE)
+unset(FETCHCONTENT_QUIET CACHE)
+unset(FETCHCONTENT_UPDATES_DISCONNECTED CACHE)
 
 # Include Scaffold utilities, externals
 include(${SCAF_VAR_SCAFFOLD_DIR}/CMakeUtilities/CMakeLists.txt)
