@@ -2,63 +2,96 @@
 # Official website : https://www.glfw.org/
 # Git repository : https://github.com/glfw/glfw
 
-# tymmkang@gmail.com 2022-02-04
-# NOTE : 정적 라이브러리만 지원하고 있습니다.
-
+# GLFW 외부 라이브러리를 CMake 설정 시점에 빌드하고, 임의의 타겟에 추가합니다.
+# IN_TARGET_MODULE[in]      외부 라이브러리를 추가될 대상
+# IN_GIT_TAG[in]            사용할 외부 라이브러리의 버전 (git 태그)
+# IN_SHARED[in]             동적 라이브러리 여부
+#
+# NOTE :
+# - 정적/동적 라이브러리 빌드에 따라 정적 라이브러리 파일의 이름이 다른것에 주의 (glfw, glfwdll)
+#
 function(SCAF_EM_FUNC_ADD_GLFW 
-    TARGET_MODULE)
+    IN_TARGET_MODULE
+    IN_GIT_TAG
+    IN_SHARED)
 
     set(VAR_EXTERNAL_NAME           "glfw")
     set(VAR_EXTERNAL_GIT_REPO_URL   "https://github.com/glfw/glfw.git")
-    set(VAR_EXTERNAL_GIT_TAG        "3.3.6")
-    set(VAR_EXTERNAL_SHARED         OFF)
+    set(VAR_FETCH_CONTENT_NAME      "${VAR_EXTERNAL_NAME}-${IN_GIT_TAG}")
+    if (${IN_SHARED})
+        set(VAR_FETCH_CONTENT_NAME  "${VAR_FETCH_CONTENT_NAME}-shared")
+    endif ()
+    set (VAR_CONFIG_LIST "Release" "Debug")
 
-    if (NOT TARGET ${VAR_EXTERNAL_NAME})
+    message(STATUS "Make dependency on '${IN_TARGET_MODULE}' to '${VAR_FETCH_CONTENT_NAME}'")
 
-        ExternalProject_Add(${VAR_EXTERNAL_NAME} 
+    if (NOT EXISTS ${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME})
+    
+        FetchContent_Declare(${VAR_FETCH_CONTENT_NAME}
             GIT_REPOSITORY ${VAR_EXTERNAL_GIT_REPO_URL}
-            GIT_TAG ${VAR_EXTERNAL_GIT_TAG}
+            GIT_TAG ${IN_GIT_TAG}
+        )
 
-            PREFIX ${FETCHCONTENT_BASE_DIR}/${VAR_EXTERNAL_NAME}
-            INSTALL_DIR ${SCAF_VAR_EXTERNAL_MODULE_PREFIX_DIR}/${VAR_EXTERNAL_NAME}
-        
-            BUILD_COMMAND ""
-        
-            CMAKE_ARGS
-                "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>"
-                "-DCMAKE_BUILD_TYPE=$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>"
-                "-DCMAKE_CONFIGURATION_TYPES=$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>"
-                "-DBUILD_SHARED_LIBS=${VAR_EXTERNAL_SHARED}"
+        FetchContent_GetProperties(${VAR_FETCH_CONTENT_NAME})
+        if (NOT "${${VAR_FETCH_CONTENT_NAME}_POPULATED}")
+            message(STATUS "\tClone '${VAR_FETCH_CONTENT_NAME}' from '${VAR_EXTERNAL_GIT_REPO_URL}'")
+
+            FetchContent_Populate(${VAR_FETCH_CONTENT_NAME})
+
+            # Hide FetchContent related options from CMake gui (HACK)
+            string(TOUPPER ${VAR_FETCH_CONTENT_NAME} VAR_FETCH_CONTENT_NAME_UPPER)
+            unset("FETCHCONTENT_SOURCE_DIR_${VAR_FETCH_CONTENT_NAME_UPPER}" CACHE)
+            unset("FETCHCONTENT_UPDATES_DISCONNECTED_${VAR_FETCH_CONTENT_NAME_UPPER}" CACHE)
+
+            message(STATUS "\tClone '${VAR_FETCH_CONTENT_NAME}' from '${VAR_EXTERNAL_GIT_REPO_URL}' - Done")
+        endif ()
+
+        set(VAR_SRC_DIR "${${VAR_FETCH_CONTENT_NAME}_SOURCE_DIR}")
+        foreach(VAR_CONFIG ${VAR_CONFIG_LIST})
+            message(STATUS "\tBuild '${VAR_FETCH_CONTENT_NAME}'(${VAR_CONFIG})")
+
+            set (CMAKE_ARGS
+                "-DCMAKE_INSTALL_PREFIX=${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/${VAR_CONFIG}"
+                "-DCMAKE_BUILD_TYPE=${VAR_CONFIG}"
+                "-DCMAKE_CONFIGURATION_TYPES=${VAR_CONFIG}"
+                "-DBUILD_SHARED_LIBS=${IN_SHARED}"
                 "-DGLFW_BUILD_EXAMPLES=OFF"
                 "-DGLFW_BUILD_TESTS=OFF"
                 "-DGLFW_BUILD_DOCS=OFF"
-        
-            INSTALL_COMMAND
-                ${CMAKE_COMMAND}
-                --build .
-                --target install
-                --config $<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
+            )
 
-            # tymmkang@gmail.com 2022-02-04
-            # NOTE : 개인 리포지토리에서 마이그레이션 할 때 이런 인자를 사용했었습니다.
-            # 어렴풋이 기억나는 이유는 VSCode 개발환경에서 Ninja 제너레이터를 사용하는 것과 관련이 있었던 것 같기도...   
-            # BUILD_BYPRODUCTS "${INSTALL_DIR}/lib/glfw3.lib"
+            set (BUILD_COMMAND_ARGS
+                "-S ${VAR_SRC_DIR}" 
+                "-B ${VAR_SRC_DIR}/CMakeBuild"
+                "-G ${CMAKE_GENERATOR}")
+
+            if (NOT ${CMAKE_GENERATOR_PLATFORM} STREQUAL "")
+                set (BUILD_COMMAND_ARGS ${BUILD_COMMAND_ARGS} "-A ${CMAKE_GENERATOR_PLATFORM}")
+            endif()
+
+            execute_process(COMMAND ${CMAKE_COMMAND} ${BUILD_COMMAND_ARGS} ${CMAKE_ARGS} OUTPUT_QUIET ERROR_QUIET)
+            execute_process(COMMAND ${CMAKE_COMMAND} --build ${VAR_SRC_DIR}/CMakeBuild/. --target install --config ${VAR_CONFIG} OUTPUT_QUIET ERROR_QUIET)
             
-            LOG_DOWNLOAD 1 LOG_UPDATE 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1
-        )
-
-        set_target_properties(${VAR_EXTERNAL_NAME} PROPERTIES FOLDER ${SCAF_VAR_EXTERNAL_MODULE_RELATIVE_DIR})
-
-        # if (${VAR_EXTERNAL_SHARED})
-        #     # TODO : Copy shared library to project output
-        # endif ()
+            message(STATUS "\tBuild '${VAR_FETCH_CONTENT_NAME}'(${VAR_CONFIG}) - Done")
+        endforeach()
     endif ()
 
-    message(STATUS "Add '${VAR_EXTERNAL_NAME}' external dependency to '${TARGET_MODULE}'") 
+    foreach (VAR_CONFIG ${VAR_CONFIG_LIST})
+        file (GLOB VAR_SHARED_LIST "${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/${VAR_CONFIG}/bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}")
+        foreach (VAR_SHARED_FILE_PATH ${VAR_SHARED_LIST})
+            get_filename_component(VAR_SHARED_FILE_NAME ${VAR_SHARED_FILE_PATH} NAME)
+            if (NOT EXISTS "${SCAF_VAR_OUTPUT_DIR}/${VAR_CONFIG}/${VAR_SHARED_FILE_NAME}")
+                file(COPY ${VAR_SHARED_FILE_PATH} DESTINATION "${SCAF_VAR_OUTPUT_DIR}/${VAR_CONFIG}")
+            endif ()
+        endforeach ()
+    endforeach ()
 
-    ExternalProject_Get_property(${VAR_EXTERNAL_NAME} INSTALL_DIR)
-    add_dependencies(${TARGET_MODULE} ${VAR_EXTERNAL_NAME})
-    target_include_directories(${TARGET_MODULE} PRIVATE "${INSTALL_DIR}/include")
-    target_link_libraries(${TARGET_MODULE} PRIVATE "${INSTALL_DIR}/lib/glfw3${CMAKE_STATIC_LIBRARY_SUFFIX}")
+    set(VAR_CONFIG_EXPGEN "$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>")
+    target_include_directories(${IN_TARGET_MODULE} PRIVATE "${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/${VAR_CONFIG_EXPGEN}/include")
+    
+    file(GLOB VAR_STATIC_RELEASE_LIST "${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/Release/lib/*${CMAKE_STATIC_LIBRARY_SUFFIX}")
+    file(GLOB VAR_STATIC_DEBUG_LIST "${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/Debug/lib/*${CMAKE_STATIC_LIBRARY_SUFFIX}")
+    target_link_libraries(${IN_TARGET_MODULE} PRIVATE "$<$<CONFIG:Release>:${VAR_STATIC_RELEASE_LIST}>$<$<CONFIG:Debug>:${VAR_STATIC_DEBUG_LIST}>")
 
+    message(STATUS "Make dependency on '${IN_TARGET_MODULE}' to '${VAR_FETCH_CONTENT_NAME}' - DONE")
 endfunction()

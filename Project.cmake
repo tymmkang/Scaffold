@@ -36,11 +36,15 @@ add_compile_definitions("$<$<CONFIG:Release>:RELEASE=2>")
 include(ExternalProject)
 include(FetchContent)
 
-# Hide FetchContent related options from CMake gui
+# Hide FetchContent related options from CMake gui (HACK)
 unset(FETCHCONTENT_BASE_DIR CACHE)
-unset(FETCHCONTENT_FULLY_DISCONNECTED CACHE)
 unset(FETCHCONTENT_QUIET CACHE)
+unset(FETCHCONTENT_FULLY_DISCONNECTED CACHE)
 unset(FETCHCONTENT_UPDATES_DISCONNECTED CACHE)
+set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR}/FetchContent)
+set(FETCHCONTENT_QUIET ON)
+set(FETCHCONTENT_FULLY_DISCONNECTED OFF)
+set(FETCHCONTENT_UPDATES_DISCONNECTED OFF)
 
 # Include Scaffold utilities, externals
 include(${SCAF_VAR_SCAFFOLD_DIR}/CMakeUtilities/CMakeLists.txt)
