@@ -2,172 +2,113 @@
 # Official website : https://grpc.io/
 # Git repository : https://github.com/grpc/grpc
 
-# tymmkang@gmail.com 2022-03-15
-# NOTE : 정적 라이브러리만 지원하고 있습니다.
-
+# gRPC 외부 라이브러리를 CMake 설정 시점에 빌드하고, 임의의 타겟에 추가합니다.
+# IN_TARGET_MODULE[in]      외부 라이브러리를 추가될 대상
+# IN_GIT_TAG[in]            사용할 외부 라이브러리의 버전 (git 태그)
+#
+# NOTE :
+# 다음 이유로 인해 동적 라이브러리 빌드를 지원하지 않으며, 정적 라이브러리만 지원함
+# - 공식 문서에서 윈도우 환경에서의 동적 라이브러리 빌드는 권장하지 않는다고 함
+# - 공식 문서의 동적 라이브러리 빌드 절차를 따라도 빌드에 성공하지 못함
+# 주의 :
+# - zlib은 정적/동적 라이브러리 빌드 여부에 관계없이 항상 동적 라이브러리를 링크해 줘야 함
 function(SCAF_EM_FUNC_ADD_GRPC 
-    TARGET_MODULE)
-
-    get_target_property(VAR_TARGET_MODULE_TYPE ${TARGET_MODULE} TYPE)
+    IN_TARGET_MODULE
+    IN_GIT_TAG)
 
     set(VAR_EXTERNAL_NAME           "grpc")
     set(VAR_EXTERNAL_GIT_REPO_URL   "https://github.com/grpc/grpc.git")
-    set(VAR_EXTERNAL_GIT_TAG        "v1.44.0")
-    set(VAR_EXTERNAL_SHARED         OFF)
+    set(VAR_FETCH_CONTENT_NAME      "${VAR_EXTERNAL_NAME}-${IN_GIT_TAG}")
+    if (${IN_SHARED})
+        set(VAR_FETCH_CONTENT_NAME  "${VAR_FETCH_CONTENT_NAME}-shared")
+    endif ()
+    set (VAR_CONFIG_LIST "Release" "Debug")
 
-    if (NOT TARGET ${VAR_EXTERNAL_NAME})
+    message(STATUS "Make dependency on '${IN_TARGET_MODULE}' to '${VAR_FETCH_CONTENT_NAME}'")
 
-        ExternalProject_Add(${VAR_EXTERNAL_NAME} 
+    if (NOT EXISTS ${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME})
+
+        FetchContent_Declare(${VAR_FETCH_CONTENT_NAME}
             GIT_REPOSITORY ${VAR_EXTERNAL_GIT_REPO_URL}
-            GIT_TAG ${VAR_EXTERNAL_GIT_TAG}
-
-            PREFIX ${FETCHCONTENT_BASE_DIR}/${VAR_EXTERNAL_NAME}
-            INSTALL_DIR ${SCAF_VAR_EXTERNAL_MODULE_PREFIX_DIR}/${VAR_EXTERNAL_NAME}
-        
-            BUILD_COMMAND ""
-        
-            CMAKE_ARGS
-                "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>"
-                "-DINSTALL_BIN_DIR=<INSTALL_DIR>/bin"
-                "-DINSTALL_INC_DIR=<INSTALL_DIR>/include"
-                "-DINSTALL_LIB_DIR=<INSTALL_DIR>/lib"
-                "-DINSTALL_MAN_DIR=<INSTALL_DIR>/share/man"
-                "-DINSTALL_PKGCONFIG_DIR=<INSTALL_DIR>/share/pkgconfig"
-                "-DCMAKE_BUILD_TYPE=$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>"
-                "-DCMAKE_CONFIGURATION_TYPES=$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>"
-                "-DBUILD_SHARED_LIBS=${VAR_EXTERNAL_SHARED}"
-        
-            INSTALL_COMMAND
-                ${CMAKE_COMMAND}
-                --build .
-                --target install
-                --config $<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
-
-            LOG_DOWNLOAD 1 LOG_UPDATE 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1
+            GIT_TAG ${IN_GIT_TAG}
         )
 
-        set_target_properties(${VAR_EXTERNAL_NAME} PROPERTIES FOLDER ${SCAF_VAR_EXTERNAL_MODULE_RELATIVE_DIR})
+        FetchContent_GetProperties(${VAR_FETCH_CONTENT_NAME})
 
-        # if (${VAR_EXTERNAL_SHARED})
-        #     # TODO : Copy shared library to project output
-        # endif ()
-    endif ()
+        if (NOT "${${VAR_FETCH_CONTENT_NAME}_POPULATED}")
+            message(STATUS "\tClone '${VAR_FETCH_CONTENT_NAME}' from '${VAR_EXTERNAL_GIT_REPO_URL}'")
 
-    message(STATUS "Add '${VAR_EXTERNAL_NAME}' external dependency to '${TARGET_MODULE}'") 
+            FetchContent_Populate(${VAR_FETCH_CONTENT_NAME})
 
-    ExternalProject_Get_property(${VAR_EXTERNAL_NAME} INSTALL_DIR)
-    add_dependencies(${TARGET_MODULE} ${VAR_EXTERNAL_NAME})
+            # Hide FetchContent related options from CMake gui (HACK)
+            string(TOUPPER ${VAR_FETCH_CONTENT_NAME} VAR_FETCH_CONTENT_NAME_UPPER)
+            unset("FETCHCONTENT_SOURCE_DIR_${VAR_FETCH_CONTENT_NAME_UPPER}" CACHE)
+            unset("FETCHCONTENT_UPDATES_DISCONNECTED_${VAR_FETCH_CONTENT_NAME_UPPER}" CACHE)
 
-    if (NOT ${VAR_TARGET_MODULE_TYPE} STREQUAL "UTILITY")
-        target_include_directories(${TARGET_MODULE} PRIVATE "${INSTALL_DIR}/include")
-        target_link_libraries(${TARGET_MODULE} PRIVATE "${INSTALL_DIR}/lib/*${CMAKE_STATIC_LIBRARY_SUFFIX}")
-    endif ()
+            message(STATUS "\tClone '${VAR_FETCH_CONTENT_NAME}' from '${VAR_EXTERNAL_GIT_REPO_URL}' - Done")
+        endif ()
 
-endfunction()
+        set(VAR_SRC_DIR "${${VAR_FETCH_CONTENT_NAME}_SOURCE_DIR}")
+        foreach(VAR_CONFIG ${VAR_CONFIG_LIST})
+            message(STATUS "\tBuild '${VAR_FETCH_CONTENT_NAME}'(${VAR_CONFIG})")
 
-# 코드젠을 수행하는 protoc의 경로를 반환합니다.
-# OUT_PROTOC_ABSOLUTE_PATH[out]     protoc의 절대경로
-function(SCAF_EM_FUNC__GRPC_GET_PROTOC_ABSOLUTE_PATH
-    OUT_PROTOC_ABSOLUTE_PATH)
+            set (CMAKE_ARGS
+                "-DCMAKE_BUILD_TYPE=${VAR_CONFIG}"
+                "-DCMAKE_CONFIGURATION_TYPES=${VAR_CONFIG}"
 
-    set(VAR_EXTERNAL_NAME "grpc")
-    ExternalProject_Get_property(${VAR_EXTERNAL_NAME} INSTALL_DIR)
+                # 켜주지 않으면 경고 발생
+                "-DABSL_PROPAGATE_CXX_STD=ON"
 
-    if (WIN32)
-        set(${OUT_PROTOC_ABSOLUTE_PATH} "${INSTALL_DIR}/bin/protoc.exe" PARENT_SCOPE)
-    else ()
-        set(${OUT_PROTOC_ABSOLUTE_PATH} "${INSTALL_DIR}/bin/protoc" PARENT_SCOPE)
-    endif ()
-endfunction()
+                # Install 경로 관련
+                "-DCMAKE_INSTALL_PREFIX=${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/${VAR_CONFIG}"
+                "-DINSTALL_BIN_DIR=${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/${VAR_CONFIG}/bin"
+                "-DINSTALL_INC_DIR=${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/${VAR_CONFIG}/include"
+                "-DINSTALL_LIB_DIR=${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/${VAR_CONFIG}/lib"
+                "-DINSTALL_MAN_DIR=${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/${VAR_CONFIG}/share/man"
+                "-DINSTALL_PKGCONFIG_DIR=${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/${VAR_CONFIG}/share/pkgconfig"
 
-# protoc의 인자로 전달하는 플러그인의 경로를 반환합니다.
-# OUT_GRPC_CPP_PLUGIN_ABSOLUTE_PATH[out]     grpc_cpp_plugin의 절대경로
-function(SCAF_EM_FUNC__GRPC_GET_GRPC_CPP_PLUGIN_ABSOLUTE_PATH
-    OUT_GRPC_CPP_PLUGIN_ABSOLUTE_PATH)
+                # 사용하지 않는 플러그인들
+                "-DgRPC_BUILD_CSHARP_EXT=OFF"
+                "-DgRPC_BUILD_GRPC_CSHARP_PLUGIN=OFF"
+                "-DgRPC_BUILD_GRPC_NODE_PLUGIN=OFF"
+                "-DgRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN=OFF"
+                "-DgRPC_BUILD_GRPC_PHP_PLUGIN=OFF"
+                "-DgRPC_BUILD_GRPC_PYTHON_PLUGIN=OFF"
+                "-DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF"
+            )
 
-    set(VAR_EXTERNAL_NAME "grpc")
-    ExternalProject_Get_property(${VAR_EXTERNAL_NAME} INSTALL_DIR)
+            set (BUILD_COMMAND_ARGS
+                "-S ${VAR_SRC_DIR}" 
+                "-B ${VAR_SRC_DIR}/CMakeBuild"
+                "-G ${CMAKE_GENERATOR}")
 
-    if (WIN32)
-        set(${OUT_GRPC_CPP_PLUGIN_ABSOLUTE_PATH} "${INSTALL_DIR}/bin/grpc_cpp_plugin.exe" PARENT_SCOPE)
-    else ()
-        set(${OUT_GRPC_CPP_PLUGIN_ABSOLUTE_PATH} "${INSTALL_DIR}/bin/grpc_cpp_plugin" PARENT_SCOPE)
-    endif ()
-endfunction()
+            if (NOT ${CMAKE_GENERATOR_PLATFORM} STREQUAL "")
+                set (BUILD_COMMAND_ARGS ${BUILD_COMMAND_ARGS} "-A ${CMAKE_GENERATOR_PLATFORM}")
+            endif()
 
-# 임의의 타겟에 gRPC 코드생성 커맨드를 등록하는 함수를 간편하게 정의하기위한 매크로입니다.
-# IN_PROTO_TARGET_NAME[in]      *.proto 정의가 포함된 타겟 이름으로, 이 이름에 따라 정의되는 함수명이 결정됩니다.
-# IN_PROTO_ABSOLUTE_DIR[in]     *.proto 파일이 포함된 절대경로
-# IN_PROTO_FILENAME_LIST[in]    IN_PROTO_ABSOLUTE_DIR에 포함된 *.proto 파일이름 리스트. 확장자가 포함되지 않습니다.
-macro(SCAF_EM_MACRO__GRPC_GEN_RESERVE_FUNCTION_DEFINE
-    IN_PROTO_TARGET_NAME
-    IN_PROTO_ABSOLUTE_DIR
-    IN_PROTO_FILENAME_LIST)
-
-    # 코드젠 출력 결과물 파일이름 리스트를 반환합니다. 이름에는 확장자가 포함됩니다.
-    # OUT_GENERATED_SOURCE_FILE_NAME_LIST[out]      
-    function(SCAF_EM_FUNC__GRPC_GET_CODEGEN_FILENAME_LIST_${IN_PROTO_TARGET_NAME}
-        OUT_GENERATED_SOURCE_FILE_NAME_LIST)
-
-        set(VAR_GENERATED_SOURCE_FILE_NAME_LIST)
-        foreach(VAR_PROTO_FILE_NAME ${IN_PROTO_FILENAME_LIST})
-            # List append
-            set(VAR_GENERATED_SOURCE_FILE_NAME_LIST ${VAR_GENERATED_SOURCE_FILE_NAME_LIST} 
-                "${VAR_PROTO_FILE_NAME}.pb.h"
-                "${VAR_PROTO_FILE_NAME}.pb.cc"
-                "${VAR_PROTO_FILE_NAME}.grpc.pb.h"
-                "${VAR_PROTO_FILE_NAME}.grpc.pb.cc")
+            execute_process(COMMAND ${CMAKE_COMMAND} ${BUILD_COMMAND_ARGS} ${CMAKE_ARGS} OUTPUT_QUIET ERROR_QUIET)
+            execute_process(COMMAND ${CMAKE_COMMAND} --build ${VAR_SRC_DIR}/CMakeBuild/. --target install --config ${VAR_CONFIG} OUTPUT_QUIET ERROR_QUIET)
+            
+            message(STATUS "\tBuild '${VAR_FETCH_CONTENT_NAME}'(${VAR_CONFIG}) - Done")
         endforeach()
+    endif ()
 
-        set(${OUT_GENERATED_SOURCE_FILE_NAME_LIST} ${VAR_GENERATED_SOURCE_FILE_NAME_LIST} PARENT_SCOPE)
-    endfunction()
+    foreach (VAR_CONFIG ${VAR_CONFIG_LIST})
+        file (GLOB VAR_SHARED_LIST "${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/${VAR_CONFIG}/bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}")
+        foreach (VAR_SHARED_FILE_PATH ${VAR_SHARED_LIST})
+            get_filename_component(VAR_SHARED_FILE_NAME ${VAR_SHARED_FILE_PATH} NAME)
+            if (NOT EXISTS "${SCAF_VAR_OUTPUT_DIR}/${VAR_CONFIG}/${VAR_SHARED_FILE_NAME}")
+                file(COPY ${VAR_SHARED_FILE_PATH} DESTINATION "${SCAF_VAR_OUTPUT_DIR}/${VAR_CONFIG}")
+            endif ()
+        endforeach ()
+    endforeach ()
 
-    # 코드젠 생성을 수행하는 커멘드를 임의의 타겟에 추가합니다.
-    # IN_CODEGEN_TRIGGER_TARGET_NAME[in]
-    # IN_CODEGEN_OUTPUT_ABSOLUTE_DIR[in]
-    function(SCAF_EM_FUNC__GRPC_RESERVE_CODEGEN_${IN_PROTO_TARGET_NAME}
-        IN_CODEGEN_TRIGGER_TARGET_NAME
-        IN_CODEGEN_OUTPUT_ABSOLUTE_DIR)
+    set(VAR_CONFIG_EXPGEN "$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>")
+    target_include_directories(${IN_TARGET_MODULE} PRIVATE "${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/${VAR_CONFIG_EXPGEN}/include")
 
-        add_dependencies(${IN_CODEGEN_TRIGGER_TARGET_NAME} ${IN_PROTO_TARGET_NAME})
+    file(GLOB VAR_STATIC_RELEASE_LIST "${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/Release/lib/*${CMAKE_STATIC_LIBRARY_SUFFIX}")
+    file(GLOB VAR_STATIC_DEBUG_LIST "${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/Debug/lib/*${CMAKE_STATIC_LIBRARY_SUFFIX}")
+    target_link_libraries(${IN_TARGET_MODULE} PRIVATE "$<$<CONFIG:Release>:${VAR_STATIC_RELEASE_LIST}>$<$<CONFIG:Debug>:${VAR_STATIC_DEBUG_LIST}>")
 
-        SCAF_EM_FUNC__GRPC_GET_PROTOC_ABSOLUTE_PATH(VAR_PROTOC_EXEC)
-        SCAF_EM_FUNC__GRPC_GET_GRPC_CPP_PLUGIN_ABSOLUTE_PATH(VAR_GRPC_CPP_PLUGIN_EXEC)
-
-        set(VAR_GENERATED_SOURCE_FILE_NAME_LIST)
-        foreach(VAR_PROTO_FILE_NAME ${IN_PROTO_FILENAME_LIST})
-            # List append
-            set(VAR_GENERATED_SOURCE_FILE_NAME_LIST ${VAR_GENERATED_SOURCE_FILE_NAME_LIST} 
-                "${VAR_PROTO_FILE_NAME}.pb.h"
-                "${VAR_PROTO_FILE_NAME}.pb.cc"
-                "${VAR_PROTO_FILE_NAME}.grpc.pb.h"
-                "${VAR_PROTO_FILE_NAME}.grpc.pb.cc")
-        endforeach()
-
-        SCAF_UTILITY_FUNC__INSERT_STRING_FORWARD("${VAR_GENERATED_SOURCE_FILE_NAME_LIST}"
-            "${IN_CODEGEN_OUTPUT_ABSOLUTE_DIR}/"
-            VAR_GRPC_ABSOLUTE_FILE_PATH_LIST)
-
-        SCAF_UTILITY_FUNC__APPEND_STRING_BACKWARD("${IN_PROTO_FILENAME_LIST}" ".proto" VAR_PROTO_FILENAME_WITH_EXTENSION_LIST)
-
-        set(VAR_PROTO_LIST)
-        foreach(VAR_PROTO ${VAR_PROTO_FILENAME_WITH_EXTENSION_LIST})
-            set(VAR_PROTO_LIST ${VAR_PROTO_LIST} ${VAR_PROTO})
-        endforeach()
-        
-        # 여기서 이벤트 등록
-        add_custom_command(TARGET ${IN_CODEGEN_TRIGGER_TARGET_NAME}
-            PRE_BUILD
-            COMMAND ${CMAKE_COMMAND} -E rm -rf ${IN_CODEGEN_OUTPUT_ABSOLUTE_DIR}
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${IN_CODEGEN_OUTPUT_ABSOLUTE_DIR}
-            COMMAND ${VAR_PROTOC_EXEC} --proto_path="${IN_PROTO_ABSOLUTE_DIR}" 
-                                       --grpc_out="${IN_CODEGEN_OUTPUT_ABSOLUTE_DIR}" 
-                                       --plugin=protoc-gen-grpc="${VAR_GRPC_CPP_PLUGIN_EXEC}" 
-                                       ${VAR_PROTO_LIST}
-            COMMAND ${VAR_PROTOC_EXEC} --proto_path="${IN_PROTO_ABSOLUTE_DIR}" 
-                                       --cpp_out="${IN_CODEGEN_OUTPUT_ABSOLUTE_DIR}" 
-                                       ${VAR_PROTO_LIST}
-            BYPRODUCTS ${VAR_GRPC_ABSOLUTE_FILE_PATH_LIST})
-    endfunction()
-
-endmacro()
+    message(STATUS "Make dependency on '${IN_TARGET_MODULE}' to '${VAR_FETCH_CONTENT_NAME}' - DONE")
+endfunction()
