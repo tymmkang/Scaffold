@@ -86,7 +86,7 @@ function(SCAF_EM_FUNC_ADD_GLFW
         foreach (VAR_SHARED_FILE_PATH ${VAR_SHARED_LIST})
             get_filename_component(VAR_SHARED_FILE_NAME ${VAR_SHARED_FILE_PATH} NAME)
 
-            set(VAR_COPY_DST_DIR "${SCAF_VAR_OUTPUT_DIR}/${VAR_CONFIG}")
+            set(VAR_COPY_DST_DIR "${SCAF_CONFIG_OUTPUT_DIR}/${VAR_CONFIG}")
             if (NOT ${CMAKE_GENERATOR_PLATFORM} STREQUAL "")
                 set(VAR_COPY_DST_DIR "${VAR_COPY_DST_DIR}-${CMAKE_GENERATOR_PLATFORM}")
             endif()

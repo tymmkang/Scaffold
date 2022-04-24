@@ -30,9 +30,9 @@ function(SCAF_EM_FUNC_ADD_CXXOPT
         file(GLOB VAR_FILES 
             "${${VAR_EXTERNAL_NAME}_SOURCE_DIR}/include/*")
         file(COPY "${VAR_FILES}" 
-            DESTINATION "${SCAF_VAR_EXTERNAL_MODULE_PREFIX_DIR}/${VAR_EXTERNAL_NAME}/include/${VAR_EXTERNAL_NAME}")
+            DESTINATION "${SCAF_CONFIG_EXTERNAL_MODULE_PREFIX_DIR}/${VAR_EXTERNAL_NAME}/include/${VAR_EXTERNAL_NAME}")
     endif ()
 
     message(STATUS "Add '${VAR_EXTERNAL_NAME}' external dependency to '${TARGET_MODULE}'") 
-    target_include_directories(${TARGET_MODULE} PRIVATE "${SCAF_VAR_EXTERNAL_MODULE_PREFIX_DIR}/${VAR_EXTERNAL_NAME}/include")
+    target_include_directories(${TARGET_MODULE} PRIVATE "${SCAF_CONFIG_EXTERNAL_MODULE_PREFIX_DIR}/${VAR_EXTERNAL_NAME}/include")
 endfunction()

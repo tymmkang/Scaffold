@@ -27,9 +27,9 @@ function(SCAF_EM_FUNC_ADD_GLM
         # tymmkang@gmail.com 2022-02-04
         # NOTE : 리포지토리 별로 디렉토리 구조가 다르기 때문에 신경 써 줘야 합니다.
         file(COPY "${${VAR_EXTERNAL_NAME}_SOURCE_DIR}/${VAR_EXTERNAL_NAME}" 
-            DESTINATION "${SCAF_VAR_EXTERNAL_MODULE_PREFIX_DIR}/${VAR_EXTERNAL_NAME}/include")
+            DESTINATION "${SCAF_CONFIG_EXTERNAL_MODULE_PREFIX_DIR}/${VAR_EXTERNAL_NAME}/include")
     endif ()
 
     message(STATUS "Add '${VAR_EXTERNAL_NAME}' external dependency to '${TARGET_MODULE}'") 
-    target_include_directories(${TARGET_MODULE} PRIVATE "${SCAF_VAR_EXTERNAL_MODULE_PREFIX_DIR}/${VAR_EXTERNAL_NAME}/include")
+    target_include_directories(${TARGET_MODULE} PRIVATE "${SCAF_CONFIG_EXTERNAL_MODULE_PREFIX_DIR}/${VAR_EXTERNAL_NAME}/include")
 endfunction()

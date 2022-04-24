@@ -27,8 +27,8 @@ function(SCAF_EM_FUNC_ADD_EGL_REGISTRY_API
     endif ()
 
     file(COPY "${${VAR_EXTERNAL_NAME}_SOURCE_DIR}/api/${API}" 
-        DESTINATION "${SCAF_VAR_EXTERNAL_MODULE_PREFIX_DIR}/${API}/include")
+        DESTINATION "${SCAF_CONFIG_EXTERNAL_MODULE_PREFIX_DIR}/${API}/include")
 
     message(STATUS "Add '${VAR_EXTERNAL_NAME} (${API})' external dependency to '${TARGET_MODULE}'") 
-    target_include_directories(${TARGET_MODULE} PRIVATE "${SCAF_VAR_EXTERNAL_MODULE_PREFIX_DIR}/${API}/include")
+    target_include_directories(${TARGET_MODULE} PRIVATE "${SCAF_CONFIG_EXTERNAL_MODULE_PREFIX_DIR}/${API}/include")
 endfunction()
