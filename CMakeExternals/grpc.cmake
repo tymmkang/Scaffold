@@ -19,10 +19,15 @@ function(SCAF_EM_FUNC_ADD_GRPC
     set(VAR_EXTERNAL_NAME           "grpc")
     set(VAR_EXTERNAL_GIT_REPO_URL   "https://github.com/grpc/grpc.git")
     set(VAR_FETCH_CONTENT_NAME      "${VAR_EXTERNAL_NAME}-${IN_GIT_TAG}")
+    set (VAR_CONFIG_LIST "Release" "Debug")
+
+    if (NOT ${CMAKE_GENERATOR_PLATFORM} STREQUAL "")
+        set(VAR_FETCH_CONTENT_NAME  "${VAR_FETCH_CONTENT_NAME}-${CMAKE_GENERATOR_PLATFORM}")
+    endif()
+
     if (${IN_SHARED})
         set(VAR_FETCH_CONTENT_NAME  "${VAR_FETCH_CONTENT_NAME}-shared")
     endif ()
-    set (VAR_CONFIG_LIST "Release" "Debug")
 
     message(STATUS "Make dependency on '${IN_TARGET_MODULE}' to '${VAR_FETCH_CONTENT_NAME}'")
 

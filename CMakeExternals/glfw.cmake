@@ -18,11 +18,16 @@ function(SCAF_EM_FUNC_ADD_GLFW
     set(VAR_EXTERNAL_NAME           "glfw")
     set(VAR_EXTERNAL_GIT_REPO_URL   "https://github.com/glfw/glfw.git")
     set(VAR_FETCH_CONTENT_NAME      "${VAR_EXTERNAL_NAME}-${IN_GIT_TAG}")
+    set (VAR_CONFIG_LIST "Release" "Debug")
+
+    if (NOT ${CMAKE_GENERATOR_PLATFORM} STREQUAL "")
+        set(VAR_FETCH_CONTENT_NAME  "${VAR_FETCH_CONTENT_NAME}-${CMAKE_GENERATOR_PLATFORM}")
+    endif()
     if (${IN_SHARED})
         set(VAR_FETCH_CONTENT_NAME  "${VAR_FETCH_CONTENT_NAME}-shared")
     endif ()
-    set (VAR_CONFIG_LIST "Release" "Debug")
-
+    string(TOLOWER ${VAR_FETCH_CONTENT_NAME} VAR_FETCH_CONTENT_NAME)
+    
     message(STATUS "Make dependency on '${IN_TARGET_MODULE}' to '${VAR_FETCH_CONTENT_NAME}'")
 
     if (NOT EXISTS ${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME})
@@ -80,8 +85,14 @@ function(SCAF_EM_FUNC_ADD_GLFW
         file (GLOB VAR_SHARED_LIST "${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/${VAR_CONFIG}/bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}")
         foreach (VAR_SHARED_FILE_PATH ${VAR_SHARED_LIST})
             get_filename_component(VAR_SHARED_FILE_NAME ${VAR_SHARED_FILE_PATH} NAME)
-            if (NOT EXISTS "${SCAF_VAR_OUTPUT_DIR}/${VAR_CONFIG}/${VAR_SHARED_FILE_NAME}")
-                file(COPY ${VAR_SHARED_FILE_PATH} DESTINATION "${SCAF_VAR_OUTPUT_DIR}/${VAR_CONFIG}")
+
+            set(VAR_COPY_DST_DIR "${SCAF_VAR_OUTPUT_DIR}/${VAR_CONFIG}")
+            if (NOT ${CMAKE_GENERATOR_PLATFORM} STREQUAL "")
+                set(VAR_COPY_DST_DIR "${VAR_COPY_DST_DIR}-${CMAKE_GENERATOR_PLATFORM}")
+            endif()
+
+            if (NOT EXISTS "${VAR_COPY_DST_DIR}/${VAR_SHARED_FILE_NAME}")
+                file(COPY ${VAR_SHARED_FILE_PATH} DESTINATION "${VAR_COPY_DST_DIR}")
             endif ()
         endforeach ()
     endforeach ()
