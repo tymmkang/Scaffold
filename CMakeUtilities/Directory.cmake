@@ -1,5 +1,18 @@
 # Directory
 
+# 플랫폼과 설정 표현식이 반영된 출력 경로를 반환합니다.
+# OUT_OUTPUT_DIRECTORY[out]   출력 경로 반환 파라미터
+function(SCAF_UTILITY_FUNC__GET_OUTPUT_DIRECTORY
+    OUT_OUTPUT_DIRECTORY)
+    
+  set(VAR_OUTPUT_DIR "${SCAF_CONFIG_OUTPUT_DIR}/$<CONFIG>")
+  if (NOT ${CMAKE_GENERATOR_PLATFORM} STREQUAL "")
+      set(VAR_OUTPUT_DIR "${VAR_OUTPUT_DIR}-${CMAKE_GENERATOR_PLATFORM}")
+  endif()
+
+  set(${OUT_OUTPUT_DIRECTORY} ${VAR_OUTPUT_DIR} PARENT_SCOPE)
+endfunction()
+
 # 특정 경로에 포함된 디렉토리를 반환하는 함수
 # IN_TARGET_DIRECTORY[in]               하위 디렉토리 리스트를 취득 할 부모 디렉토리
 # OUT_RESULT_SUBDIRECTORIES[out]        하위 디렉토리 반환 파라미터
