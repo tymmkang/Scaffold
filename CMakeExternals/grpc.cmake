@@ -138,6 +138,12 @@ function(SCAF_EM_FUNC_ADD_GRPC
     file(GLOB VAR_STATIC_DEBUG_LIST "${FETCHCONTENT_BASE_DIR}/${VAR_FETCH_CONTENT_NAME}/Debug/lib/*${CMAKE_STATIC_LIBRARY_SUFFIX}")
     target_link_libraries(${IN_TARGET_MODULE} PRIVATE "$<$<CONFIG:Release>:${VAR_STATIC_RELEASE_LIST}>$<$<CONFIG:Debug>:${VAR_STATIC_DEBUG_LIST}>")
 
+    # 2022-05-15 기준 인코딩 문제와, C++17에서 Deprecation 된 std::iteratior를 gRPC가 생성한 코드 안에서 사용하는 것 때문에 경고가 발생한다.
+    # 경고를 무시하기위한 컴파일 옵션과 컴파일 매크로를 정의해준다. 
+    target_compile_options(${SCAF_VAR_MODULE_NAME} PRIVATE "$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+    target_compile_options(${SCAF_VAR_MODULE_NAME} PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+    target_compile_definitions(${SCAF_VAR_MODULE_NAME} PRIVATE "_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING")
+
     message(STATUS "Make dependency on '${IN_TARGET_MODULE}' to '${VAR_FETCH_CONTENT_NAME}' - DONE")
 endfunction()
 
